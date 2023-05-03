@@ -98,7 +98,6 @@ class Preprocess(nn.Module):
     def ddim_inversion(self, cond, latent, save_path, save_latents=True,
                                 timesteps_to_save=None):
         timesteps = reversed(self.scheduler.timesteps)
-        batch_size = 8  # 10
         with torch.autocast(device_type='cuda', dtype=torch.float32):
             for i, t in enumerate(tqdm(timesteps)):
                 cond_batch = cond.repeat(latent.shape[0], 1, 1)
@@ -126,7 +125,6 @@ class Preprocess(nn.Module):
     @torch.no_grad()
     def ddim_sample(self, x, cond, save_path, save_latents=False, timesteps_to_save=None):
         timesteps = self.scheduler.timesteps
-        batch_size = 8  # 10
         with torch.autocast(device_type='cuda', dtype=torch.float32):
             for i, t in enumerate(tqdm(timesteps)):
                     cond_batch = cond.repeat(x.shape[0], 1, 1)
