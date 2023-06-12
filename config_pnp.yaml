@@ -1,11 +1,11 @@
 # general
 seed: 1
 device: 'cuda'
-output_path: 'PNP-results'
+output_path: 'PNP-results/horse'
 
 # data
 image_path: 'data/horse.jpg'
-latents_path: 'latents_forward/latents'
+latents_path: 'latents_forward'
 
 # diffusion
 sd_version: '2.1'

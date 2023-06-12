@@ -86,14 +86,14 @@ class PNP(nn.Module):
         image = image.resize((512, 512), resample=Image.Resampling.LANCZOS)
         image = T.ToTensor()(image).to(self.device)
         # get noise
-        latents_path = os.path.join(self.config["latents_path"], f'noisy_latents_{self.scheduler.timesteps[0]}.pt')
+        latents_path = os.path.join(self.config["latents_path"], os.path.splitext(os.path.basename(self.config["image_path"]))[0], f'noisy_latents_{self.scheduler.timesteps[0]}.pt')
         noisy_latent = torch.load(latents_path).to(self.device)
         return image, noisy_latent
 
     @torch.no_grad()
     def denoise_step(self, x, t):
         # register the time step and features in pnp injection modules
-        source_latents = load_source_latents_t(t, self.config["latents_path"])
+        source_latents = load_source_latents_t(t, os.path.join(self.config["latents_path"], os.path.splitext(os.path.basename(self.config["image_path"]))[0]))
         latent_model_input = torch.cat([source_latents] + ([x] * 2))
 
         register_time(self, t.item())
@@ -112,7 +112,7 @@ class PNP(nn.Module):
         denoised_latent = self.scheduler.step(noise_pred, t, x)['prev_sample']
         return denoised_latent
 
-    def init_pnp_efficient(self, conv_injection_t, qk_injection_t):
+    def init_pnp(self, conv_injection_t, qk_injection_t):
         self.qk_injection_timesteps = self.scheduler.timesteps[:qk_injection_t] if qk_injection_t >= 0 else []
         self.conv_injection_timesteps = self.scheduler.timesteps[:conv_injection_t] if conv_injection_t >= 0 else []
         register_attention_control_efficient(self, self.qk_injection_timesteps)
@@ -121,7 +121,7 @@ class PNP(nn.Module):
     def run_pnp(self):
         pnp_f_t = int(self.config["n_timesteps"] * self.config["pnp_f_t"])
         pnp_attn_t = int(self.config["n_timesteps"] * self.config["pnp_attn_t"])
-        self.init_pnp_efficient(conv_injection_t=pnp_f_t, qk_injection_t=pnp_attn_t)
+        self.init_pnp(conv_injection_t=pnp_f_t, qk_injection_t=pnp_attn_t)
         edited_img = self.sample_loop(self.eps)
 
     def sample_loop(self, x):
@@ -137,7 +137,7 @@ class PNP(nn.Module):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--config_path', type=str, default='config_pnp.yaml')
+    parser.add_argument('--config_path', type=str, default='pnp-configs/config-horse.yaml')
     opt = parser.parse_args()
     with open(opt.config_path, "r") as f:
         config = yaml.safe_load(f)

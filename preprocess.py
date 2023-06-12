@@ -118,8 +118,8 @@ class Preprocess(nn.Module):
                 pred_x0 = (latent - sigma_prev * eps) / mu_prev
                 latent = mu * pred_x0 + sigma * eps
                 if save_latents:
-                    torch.save(latent, os.path.join(save_path, 'latents', f'noisy_latents_{t}.pt'))
-        torch.save(latent, os.path.join(save_path, 'latents', f'noisy_latents_{t}.pt'))
+                    torch.save(latent, os.path.join(save_path, f'noisy_latents_{t}.pt'))
+        torch.save(latent, os.path.join(save_path, f'noisy_latents_{t}.pt'))
         return latent
 
     @torch.no_grad()
@@ -145,7 +145,7 @@ class Preprocess(nn.Module):
                     x = mu_prev * pred_x0 + sigma_prev * eps
 
             if save_latents:
-                torch.save(x, os.path.join(save_path, 'latents', f'noisy_latents_{t}.pt'))
+                torch.save(x, os.path.join(save_path, f'noisy_latents_{t}.pt'))
         return x
 
     @torch.no_grad()
@@ -185,8 +185,8 @@ def run(opt):
     seed_everything(opt.seed)
 
     extraction_path_prefix = "_reverse" if opt.extract_reverse else "_forward"
-    save_path = os.path.join(opt.save_dir + extraction_path_prefix)
-    os.makedirs(os.path.join(save_path, 'latents'), exist_ok=True)
+    save_path = os.path.join(opt.save_dir + extraction_path_prefix, os.path.splitext(os.path.basename(opt.data_path))[0])
+    os.makedirs(save_path, exist_ok=True)
 
     model = Preprocess(device, sd_version=opt.sd_version, hf_key=None)
     recon_image = model.extract_latents(data_path=opt.data_path,
@@ -211,6 +211,6 @@ if __name__ == "__main__":
     parser.add_argument('--steps', type=int, default=999)
     parser.add_argument('--save-steps', type=int, default=1000)
     parser.add_argument('--inversion_prompt', type=str, default='')
-    parser.add_argument('--extract-reverse', default=False, action='store_true')
+    parser.add_argument('--extract-reverse', default=False, action='store_true', help="extract features during the denoising process")
     opt = parser.parse_args()
     run(opt)
