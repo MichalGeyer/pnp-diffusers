@@ -36,7 +36,7 @@ class PNP(nn.Module):
         print('Loading SD model')
 
         pipe = StableDiffusionPipeline.from_pretrained(model_key, torch_dtype=torch.float16).to("cuda")
-        # pipe.enable_xformers_memory_efficient_attention()
+        pipe.enable_xformers_memory_efficient_attention()
 
         self.vae = pipe.vae
         self.tokenizer = pipe.tokenizer
@@ -130,7 +130,7 @@ class PNP(nn.Module):
                 x = self.denoise_step(x, t)
 
             decoded_latent = self.decode_latent(x)
-            T.ToPILImage()(decoded_latent[0]).save(f'{self.config["output_path"]}/output.png')
+            T.ToPILImage()(decoded_latent[0]).save(f'{self.config["output_path"]}/output-{self.config["prompt"]}.png')
                 
         return decoded_latent
 
